@@ -1,0 +1,6 @@
+.DS_Store
+*.zip
+extracted/
+serve.py
+.claude/
+node_modules/

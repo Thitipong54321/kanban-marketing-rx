@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kanban · Marketing Team R.X.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <div class="logo"><div class="logo-icon">RX</div><div class="logo-text">Kanban · R.X.</div></div>
+    <h2>เข้าสู่ระบบ</h2>
+    <div class="login-sub">Marketing Team · ระบบบริหารงานทีมการตลาด</div>
+    <div class="login-tabs">
+      <span class="on" data-mode="login" onclick="setLoginMode('login')">เข้าสู่ระบบ</span>
+      <span data-mode="register" onclick="setLoginMode('register')">สมัครสมาชิก</span>
+    </div>
+    <div class="login-form">
+      <div class="field"><label>ชื่อผู้ใช้</label><input id="l-user" placeholder="เช่น earth"></div>
+      <div class="field"><label>รหัสผ่าน</label><input id="l-pass" type="password" placeholder="••••••"></div>
+      <div id="login-register-fields" style="display:none">
+        <div class="field"><label>ชื่อที่แสดง</label><input id="l-name" placeholder="เช่น สมชาย"></div>
+        <div class="field"><label>ทีม</label><select id="l-team">
+          <option value="health">Consumer Health</option><option value="ecom">E-Commerce</option>
+          <option value="lasik">LASIK</option><option value="rex">REXCUER</option><option value="graphic">Graphic</option>
+        </select></div>
+      </div>
+      <div class="login-err" id="login-err"></div>
+      <button class="login-btn" id="login-btn" onclick="doLogin()">เข้าสู่ระบบ</button>
+      <div style="text-align:center;font-size:11.5px;color:#9aa0ac;margin-top:10px;">ทดลอง: <b>earth</b> / <b>admin123</b></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div class="app hidden" id="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-logo">RX</div><div><div class="brand-name">Kanban · R.X.</div><div class="brand-sub">Marketing Team</div></div></div>
+    <nav class="nav">
+      <button class="nav-item" data-view="dashboard"><svg width="17" height="17" viewBox="0 0 18 18" fill="currentColor"><rect x="2" y="2" width="6" height="6" rx="1.6"/><rect x="10" y="2" width="6" height="6" rx="1.6"/><rect x="2" y="10" width="6" height="6" rx="1.6"/><rect x="10" y="10" width="6" height="6" rx="1.6"/></svg>Dashboard</button>
+      <button class="nav-item" data-view="alltasks"><svg width="17" height="17" viewBox="0 0 18 18" fill="currentColor"><rect x="2" y="3" width="14" height="2.4" rx="1.2"/><rect x="2" y="7.8" width="14" height="2.4" rx="1.2"/><rect x="2" y="12.6" width="14" height="2.4" rx="1.2"/></svg>งานทั้งหมด</button>
+      <button class="nav-item" data-view="kanban"><svg width="17" height="17" viewBox="0 0 18 18" fill="currentColor"><rect x="2" y="2" width="3.6" height="14" rx="1.3"/><rect x="7.2" y="2" width="3.6" height="10" rx="1.3"/><rect x="12.4" y="2" width="3.6" height="12" rx="1.3"/></svg>Kanban Board</button>
+      <button class="nav-item" data-view="planner"><svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.4" y="3.4" width="13.2" height="12" rx="2.2"/><line x1="2.4" y1="7" x2="15.6" y2="7"/><line x1="6" y1="2" x2="6" y2="4.4"/><line x1="12" y1="2" x2="12" y2="4.4"/></svg>Content Planner</button>
+      <button class="nav-item" data-view="ai"><span class="ico">✦</span>AI Assistant</button>
+      <button class="nav-item" data-view="kol"><svg width="17" height="17" viewBox="0 0 18 18" fill="currentColor"><circle cx="6.3" cy="6" r="3"/><circle cx="12.4" cy="7" r="2.2"/><path d="M1.4 15.4c0-2.6 2.2-4.2 4.9-4.2s4.9 1.6 4.9 4.2z"/><path d="M11.3 15.4c0-1.7.7-3 1.9-3.8 1.9.2 3.9 1.4 3.9 3.8z"/></svg>KOL Management</button>
+      <button class="nav-item" data-view="reports"><svg width="17" height="17" viewBox="0 0 18 18" fill="currentColor"><rect x="2" y="9" width="3.2" height="7" rx="1.2"/><rect x="7.4" y="5" width="3.2" height="11" rx="1.2"/><rect x="12.8" y="2.5" width="3.2" height="13.5" rx="1.2"/></svg>รายงาน</button>
+      <button class="nav-item" data-view="members"><svg width="17" height="17" viewBox="0 0 18 18" fill="currentColor"><circle cx="9" cy="5.5" r="3.5"/><path d="M2 16c0-3.1 3.1-5 7-5s7 1.9 7 5z"/></svg>จัดการสมาชิก</button>
+    </nav>
+    <div class="side-label">ทีม</div>
+    <div class="teams">
+      <div class="team-row"><span class="team-dot" style="background:#10b981"></span><span class="team-name">Consumer Health</span><span class="team-count">36</span></div>
+      <div class="team-row"><span class="team-dot" style="background:#f59e0b"></span><span class="team-name">E-Commerce</span><span class="team-count">33</span></div>
+      <div class="team-row"><span class="team-dot" style="background:#06b6d4"></span><span class="team-name">LASIK</span><span class="team-count">25</span></div>
+      <div class="team-row"><span class="team-dot" style="background:#8b5cf6"></span><span class="team-name">REXCUER</span><span class="team-count">29</span></div>
+      <div class="team-row"><span class="team-dot" style="background:#ec4899"></span><span class="team-name">Graphic</span><span class="team-count">19</span></div>
+    </div>
+    <div class="user-card" data-logout title="คลิกเพื่อออกจากระบบ">
+      <div class="user-avatar current-user-initial">อ</div>
+      <div style="flex:1;min-width:0"><div class="user-name current-user-name">เอิร์ธ</div><div class="user-role current-user-role">Marketing Lead</div></div>
+      <span style="color:#c2c6d0;font-size:14px;">⏻</span>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- Dashboard -->
+    <section class="view" id="view-dashboard">
+      <header class="topbar">
+        <div><h1>ภาพรวมงาน</h1><div class="subtitle">วันพุธ · 18 มิถุนายน 2025</div></div>
+        <div class="spacer"></div>
+        <div class="search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9aa0ac" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg><input placeholder="ค้นหางาน..."></div>
+        <div class="notif-wrap">
+          <button class="icon-btn" id="notif-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot"></span></button>
+          <div class="notif-panel" id="notif-panel">
+            <div class="notif-head"><span class="t">แจ้งเตือน</span><span class="clear" onclick="clearNotif()">ล้างทั้งหมด</span></div>
+            <div class="notif-list" id="notif-list"></div>
+          </div>
+        </div>
+        <span id="db-badge" style="font-size:11px;font-weight:600;padding:5px 11px;border-radius:8px;cursor:pointer" title="คลิกเพื่อตั้งค่า Supabase">⚪ Demo mode</span>
+        <button class="btn-primary" data-new-task><span class="plus">+</span>งานใหม่</button>
+      </header>
+      <div class="scroll-area">
+        <div class="dash">
+          <div class="stat-row" id="stat-row"></div>
+          <div class="dash-row two-uneven">
+            <div class="panel"><div class="panel-head"><div class="panel-title">ความคืบหน้าแต่ละทีม</div><span class="panel-meta">อัปเดต 5 นาทีที่แล้ว</span></div><div class="prog-list" id="prog-list"></div></div>
+            <div class="panel" style="display:flex;flex-direction:column"><div class="panel-title" style="margin-bottom:6px">สถานะงานทั้งหมด</div><div class="donut-wrap" style="flex:1"><div class="donut"><div class="ring" style="background:conic-gradient(#94a3b8 0 27%,#3b82f6 27% 59%,#f59e0b 59% 72%,#10b981 72% 100%)"></div><div class="hole"><div class="hole-num">142</div><div class="hole-label">งานทั้งหมด</div></div></div><div class="legend" id="donut-legend"></div></div></div>
+          </div>
+          <div class="dash-row two">
+            <div class="panel"><div class="deadline-head"><span class="pulse" style="background:#f59e0b"></span><div class="title" style="color:#1b1f2a">ใกล้ครบกำหนด</div><span class="count" style="color:#9aa0ac">5 งาน</span></div><div class="deadline-list" id="deadline-soon"></div></div>
+            <div class="panel danger"><div class="deadline-head"><span class="pulse" style="background:#ef4444"></span><div class="title" style="color:#b91c1c">เลยกำหนด</div><span class="count" style="color:#e08a8a">2 งาน</span></div><div class="deadline-list" id="deadline-overdue"></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- All tasks -->
+    <section class="view" id="view-alltasks">
+      <header class="topbar"><div><h1>งานทั้งหมด</h1><div class="subtitle">คลิกที่แถวเพื่อแก้ไขรายละเอียด</div></div><div class="spacer"></div><button class="btn-primary" data-new-task><span class="plus">+</span>งานใหม่</button></header>
+      <div class="scroll-area">
+        <div class="list-wrap">
+          <div class="list-table">
+            <div class="list-row head"><div>งาน</div><div>ทีม</div><div>ความสำคัญ</div><div>กำหนด</div><div>สถานะ</div></div>
+            <div id="list-body"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Kanban -->
+    <section class="view" id="view-kanban">
+      <div class="kanban-head">
+        <div class="row1">
+          <div style="font-size:17px;font-weight:800;color:#1b1f2a;letter-spacing:-.3px">Kanban Board</div>
+          <div class="seg" id="kanban-seg"><span data-view="list">List</span><span data-view="board" class="on">Board</span><span data-view="timeline">Timeline</span></div>
+          <div class="spacer"></div>
+          <div class="search" style="width:190px;height:36px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9aa0ac" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg><input placeholder="ค้นหา..."></div>
+          <button class="btn-primary" style="height:36px" data-new-task><span class="plus">+</span>เพิ่มงาน</button>
+        </div>
+        <div class="filters" id="kanban-filters"></div>
+      </div>
+      <div class="scroll-area">
+        <div class="board" id="board"></div>
+        <div id="kanban-list-view" style="display:none"></div>
+        <div id="kanban-timeline-view" style="display:none"></div>
+      </div>
+    </section>
+
+    <!-- Content Planner -->
+    <section class="view" id="view-planner">
+      <div class="cal-head">
+        <h1 style="margin:0;font-size:17px;font-weight:800;color:#1b1f2a;letter-spacing:-.3px">มิถุนายน 2025</h1>
+        <div class="cal-nav"><span>‹</span><span>›</span></div>
+        <div class="seg"><span class="on">เดือน</span><span>สัปดาห์</span></div>
+        <div class="spacer"></div>
+        <div class="cal-legend">
+          <span><span class="sq" style="background:#94a3b8"></span>ร่าง</span>
+          <span><span class="sq" style="background:#f59e0b"></span>รออนุมัติ</span>
+          <span><span class="sq" style="background:#3b82f6"></span>พร้อมลง</span>
+          <span><span class="sq" style="background:#10b981"></span>ลงแล้ว</span>
+        </div>
+        <button class="btn-primary" style="height:36px" id="add-post-btn"><span class="plus">+</span>เพิ่มโพสต์</button>
+      </div>
+      <div class="scroll-area">
+        <div class="calendar">
+          <div class="cal-dow"><div>จันทร์</div><div>อังคาร</div><div>พุธ</div><div>พฤหัส</div><div>ศุกร์</div><div>เสาร์</div><div>อาทิตย์</div></div>
+          <div class="cal-grid" id="cal-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI -->
+    <section class="view" id="view-ai">
+      <div class="ai-wrap">
+        <div class="ai-main">
+          <header class="ai-head">
+            <div class="ai-avatar">✦</div>
+            <div><div class="ai-name">R.X. AI Assistant</div><div class="ai-status"><span class="live"></span>พร้อมช่วยงาน · เชื่อมต่อ AI จริง</div></div>
+            <span class="ai-model" id="ai-model" title="คลิกเพื่อใส่ API key">claude-haiku</span>
+          </header>
+          <div class="chat-scroll" id="chat-scroll"></div>
+          <div class="ai-input-wrap">
+            <div class="quick-actions">
+              <button class="qa" data-ask="ช่วยคิดไอเดียคอนเทนต์ Instagram 3 โพสต์ สำหรับโปรโมชั่นเลสิคกลางปีของทีม LASIK พร้อม caption และ hashtag">✦ คิดไอเดียคอนเทนต์ IG</button>
+              <button class="qa" data-ask='ช่วยแตกงาน "จัดแคมเปญ Summer Sale ของทีม E-Commerce" เป็น sub-task พร้อมแนะนำผู้รับผิดชอบและกำหนดเวลา'>✦ แตกงานเป็น sub-task</button>
+              <button class="qa" data-ask="ช่วยสรุปสถานะโปรเจกต์ของทั้ง 5 ทีม และแนะนำว่าควรโฟกัสงานไหนก่อนตามความสำคัญ">✦ สรุปสถานะโปรเจกต์</button>
+            </div>
+            <div class="ai-input"><input id="ai-input" placeholder="ถาม R.X. AI ได้เลย เช่น เขียนแคปชั่นขายอาหารเสริม..."><button class="ai-send" id="ai-send"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg></button></div>
+          </div>
+        </div>
+        <aside class="ai-side">
+          <div class="ai-side-title">AI ช่วยอะไรได้บ้าง</div>
+          <div class="ai-card" data-ask="ช่วยคิดไอเดียคอนเทนต์ Instagram 3 โพสต์ สำหรับโปรโมชั่นเลสิคกลางปีของทีม LASIK พร้อม caption และ hashtag" style="background:linear-gradient(135deg,#fbfaff,#fff)">
+            <div class="ico" style="background:rgba(124,58,237,.1);color:#7c3aed">✦</div><div class="ttl">Gen ไอเดียคอนเทนต์</div><div class="desc">หัวข้อโพสต์ · caption · hashtag · มุมเล่าเรื่อง</div>
+          </div>
+          <div class="ai-card" data-ask='ช่วยแตกงาน "จัดแคมเปญ Summer Sale ของทีม E-Commerce" เป็น sub-task พร้อมแนะนำผู้รับผิดชอบและกำหนดเวลา' style="background:linear-gradient(135deg,#fafdff,#fff)">
+            <div class="ico" style="background:rgba(6,182,212,.12)"><svg width="16" height="16" viewBox="0 0 18 18" fill="#0891b2"><rect x="2" y="2" width="3.6" height="14" rx="1.3"/><rect x="7.2" y="2" width="3.6" height="10" rx="1.3"/><rect x="12.4" y="2" width="3.6" height="12" rx="1.3"/></svg></div><div class="ttl">แตกงานเป็น sub-task</div><div class="desc">แตกงานใหญ่ พร้อมผู้รับผิดชอบและกำหนดเวลา</div>
+          </div>
+          <div class="ai-card" data-ask="ช่วยสรุปสถานะโปรเจกต์ของทั้ง 5 ทีม และแนะนำว่าควรโฟกัสงานไหนก่อนตามความสำคัญ" style="background:linear-gradient(135deg,#fafffb,#fff)">
+            <div class="ico" style="background:rgba(16,185,129,.12)"><svg width="16" height="16" viewBox="0 0 18 18" fill="#059669"><rect x="2" y="9" width="3.2" height="7" rx="1.2"/><rect x="7.4" y="5" width="3.2" height="11" rx="1.2"/><rect x="12.8" y="2.5" width="3.2" height="13.5" rx="1.2"/></svg></div><div class="ttl">สรุป + จัดลำดับงาน</div><div class="desc">สรุปสถานะ 5 ทีม และแนะนำ priority</div>
+          </div>
+          <div class="ai-promo"><div class="t">เชื่อมต่อ AI จริง ✦</div><div class="d">พิมพ์คำถามในช่องแชต แล้ว AI จะตอบกลับทันที รองรับภาษาไทยเต็มรูปแบบ</div></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- KOL -->
+    <section class="view" id="view-kol">
+      <header class="topbar"><div><h1>KOL Management</h1><div class="subtitle">จัดการอินฟลูเอนเซอร์และพาร์ตเนอร์</div></div><div class="spacer"></div><button class="btn-primary" id="add-kol-btn"><span class="plus">+</span>เพิ่ม KOL</button></header>
+      <div class="scroll-area"><div class="kol-wrap" id="kol-content"></div></div>
+    </section>
+
+    <!-- Reports -->
+    <section class="view" id="view-reports">
+      <header class="topbar"><div><h1>รายงาน</h1><div class="subtitle">สรุปผลและวิเคราะห์ภาพรวมทีมการตลาด</div></div></header>
+      <div class="scroll-area"><div class="report-wrap" id="report-content"></div></div>
+    </section>
+
+    <!-- Members -->
+    <section class="view" id="view-members">
+      <header class="topbar"><div><h1>จัดการสมาชิก</h1><div class="subtitle">อนุมัติสมาชิกใหม่ · จัดการบทบาท</div></div></header>
+      <div class="scroll-area"><div class="kol-wrap" id="members-content"></div></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- MOBILE NAV -->
+<nav class="mobile-nav">
+  <button class="mn" data-view="dashboard"><svg width="20" height="20" viewBox="0 0 18 18" fill="currentColor"><rect x="2" y="2" width="6" height="6" rx="1.6"/><rect x="10" y="2" width="6" height="6" rx="1.6"/><rect x="2" y="10" width="6" height="6" rx="1.6"/><rect x="10" y="10" width="6" height="6" rx="1.6"/></svg>หน้าหลัก</button>
+  <button class="mn" data-view="kanban"><svg width="20" height="20" viewBox="0 0 18 18" fill="currentColor"><rect x="2" y="2" width="3.6" height="14" rx="1.3"/><rect x="7.2" y="2" width="3.6" height="10" rx="1.3"/><rect x="12.4" y="2" width="3.6" height="12" rx="1.3"/></svg>Kanban</button>
+  <button class="mn" data-view="planner"><svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.4" y="3.4" width="13.2" height="12" rx="2.2"/><line x1="2.4" y1="7" x2="15.6" y2="7"/></svg>ปฏิทิน</button>
+  <button class="mn" data-view="ai"><span style="font-size:19px;line-height:1">✦</span>AI</button>
+</nav>
+
+<!-- ============ TASK MODAL ============ -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">เพิ่มงานใหม่</h3>
+    <div class="sub" id="modal-sub">สร้างการ์ดงานลงบน Kanban board</div>
+    <div class="field"><label>ชื่องาน</label><input id="m-title" placeholder="เช่น เขียนแคปชั่นโปรโมชั่นกลางปี"></div>
+    <div class="field"><div class="two">
+      <div><label>ทีม</label><select id="m-team"><option value="health">Consumer Health</option><option value="ecom">E-Commerce</option><option value="lasik">LASIK</option><option value="rex">REXCUER</option><option value="graphic">Graphic</option></select></div>
+      <div><label>ความสำคัญ</label><select id="m-priority"><option>Urgent</option><option>High</option><option selected>Medium</option><option>Low</option></select></div>
+    </div></div>
+    <div class="field"><div class="two">
+      <div><label>กำหนดส่ง</label><input id="m-date" placeholder="เช่น 5 ก.ค."></div>
+      <div><label>สถานะ</label><select id="m-status"><option value="todo">To Do</option><option value="progress">In Progress</option><option value="review">Review</option><option value="done">Done</option></select></div>
+    </div></div>
+    <div class="field"><label>ผู้รับผิดชอบ</label><select id="m-assignee"><option value="">— เลือกผู้รับผิดชอบ —</option></select></div>
+    <div class="field"><label>รายละเอียด (ไม่บังคับ)</label><textarea id="m-desc" rows="3" placeholder="เพิ่มรายละเอียดงาน..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-danger" id="m-delete" style="display:none;margin-right:auto">ลบงาน</button>
+      <button class="btn-ghost" id="m-cancel">ยกเลิก</button>
+      <button class="btn-primary" id="m-save">เพิ่มงาน</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ POST MODAL ============ -->
+<div class="modal-overlay" id="post-modal">
+  <div class="modal">
+    <h3 id="post-modal-title">เพิ่มโพสต์</h3>
+    <div class="sub">สร้างโพสต์ลงในปฏิทินคอนเทนต์</div>
+    <div class="field"><div class="two">
+      <div><label>ช่องทาง</label><select id="p-channel"><option value="IG">Instagram</option><option value="FB">Facebook</option><option value="TT">TikTok</option><option value="YT">YouTube</option><option value="LN">LINE</option></select></div>
+      <div><label>วันที่ (1-29)</label><input id="p-day" type="number" min="1" max="29" value="1"></div>
+    </div></div>
+    <div class="field"><label>ชื่อโพสต์</label><input id="p-label" placeholder="เช่น รีวิวสินค้าใหม่"></div>
+    <div class="field"><label>สถานะ</label><select id="p-status"><option value="#94a3b8">ร่าง</option><option value="#f59e0b">รออนุมัติ</option><option value="#3b82f6">พร้อมลง</option><option value="#10b981">ลงแล้ว</option></select></div>
+    <div class="field"><label>ลิงก์แนบ (ไม่บังคับ)</label><input id="p-link" placeholder="https://..."></div>
+    <div class="modal-actions">
+      <button class="btn-danger" id="p-delete" style="display:none;margin-right:auto">ลบโพสต์</button>
+      <button class="btn-ghost" id="p-cancel">ยกเลิก</button>
+      <button class="btn-primary" id="p-save">เพิ่มโพสต์</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ KOL MODAL ============ -->
+<div class="modal-overlay" id="kol-modal">
+  <div class="modal">
+    <h3 id="kol-modal-title">เพิ่ม KOL</h3>
+    <div class="sub">เพิ่มอินฟลูเอนเซอร์เข้าระบบ</div>
+    <div class="field"><label>ชื่อ KOL</label><input id="k-name" placeholder="เช่น หมอกอล์ฟ"></div>
+    <div class="field"><label>Handle</label><input id="k-handle" placeholder="@drgolf_eye"></div>
+    <div class="field"><div class="two">
+      <div><label>แพลตฟอร์ม</label><select id="k-platform"><option value="IG">Instagram</option><option value="FB">Facebook</option><option value="TT">TikTok</option><option value="YT">YouTube</option><option value="LN">LINE</option></select></div>
+      <div><label>ทีม</label><select id="k-team"><option value="health">Consumer Health</option><option value="ecom">E-Commerce</option><option value="lasik">LASIK</option><option value="rex">REXCUER</option><option value="graphic">Graphic</option></select></div>
+    </div></div>
+    <div class="field"><div class="two">
+      <div><label>Followers</label><input id="k-followers" placeholder="เช่น 120K"></div>
+      <div><label>Engagement Rate</label><input id="k-engagement" placeholder="เช่น 4.5%"></div>
+    </div></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="k-cancel">ยกเลิก</button>
+      <button class="btn-primary" id="k-save">เพิ่ม KOL</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUPABASE SETUP MODAL -->
+<div class="modal-overlay" id="setup-modal">
+  <div class="modal">
+    <h3>ตั้งค่า Supabase</h3>
+    <div class="sub">เชื่อมต่อ database จริง เพื่อเก็บข้อมูลถาวร</div>
+    <div class="field"><label>Project URL</label><input id="sb-url" placeholder="https://xxxxx.supabase.co"></div>
+    <div class="field"><label>Anon Key</label><input id="sb-key" placeholder="eyJhbGciOi..."></div>
+    <div style="font-size:11.5px;color:#9aa0ac;line-height:1.6;margin-bottom:14px">
+      <b>วิธีหา:</b> เปิด <a href="https://supabase.com/dashboard" target="_blank" style="color:#4f46e5">supabase.com/dashboard</a> → เลือกโปรเจกต์ → Settings → API → Copy URL และ anon key<br>
+      <b>หมายเหตุ:</b> อย่าลืมรัน SQL schema ใน SQL Editor ก่อน (ไฟล์ supabase/schema.sql)
+    </div>
+    <div class="modal-actions">
+      <button class="btn-danger" id="sb-disconnect" style="margin-right:auto">ยกเลิกการเชื่อมต่อ</button>
+      <button class="btn-ghost" id="sb-cancel">ปิด</button>
+      <button class="btn-primary" id="sb-save">เชื่อมต่อ</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script src="db.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
