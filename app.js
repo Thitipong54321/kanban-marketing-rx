@@ -34,6 +34,22 @@ const STATUSES = [
   { id:'done',     name:'Done',        dot:'#10b981', badgeFg:'#059669' },
 ];
 
+/* ---------- localStorage persistence (demo mode) ---------- */
+function saveLocal(key, data) { try { localStorage.setItem('rx_' + key, JSON.stringify(data)); } catch(e) {} }
+function loadLocal(key) { try { const d = localStorage.getItem('rx_' + key); return d ? JSON.parse(d) : null; } catch(e) { return null; } }
+function persistMembers() { saveLocal('members', MEMBERS); }
+function persistTasks() { saveLocal('tasks', TASKS); }
+function persistPosts() { saveLocal('posts', POSTS_DATA); }
+function persistKols() { saveLocal('kols', KOLS); }
+
+// Load saved members (e.g. newly registered pending members)
+const _savedMembers = loadLocal('members');
+if (_savedMembers && _savedMembers.length) {
+  // Merge: keep demo members but add any new ones from localStorage
+  const demoIds = new Set(MEMBERS.map(m => m.id));
+  _savedMembers.forEach(m => { if (!demoIds.has(m.id)) MEMBERS.push(m); else { const idx = MEMBERS.findIndex(x => x.id === m.id); if (idx >= 0) MEMBERS[idx] = m; } });
+}
+
 /* ---------- Mutable data (synced from Supabase when connected) ---------- */
 let TASK_SEQ = 100;
 const t = o => ({ id: TASK_SEQ++, ...o });
@@ -274,6 +290,7 @@ async function doLogin() {
     // Fallback demo
     if (MEMBERS.find(x => x.user === user)) { $('#login-err').textContent = 'ชื่อผู้ใช้นี้มีอยู่แล้ว'; return; }
     MEMBERS.push({ id:user, name, initial:name[0], role:'member', team, title:'สมาชิกใหม่', status:'pending', user, pass });
+    persistMembers();
     NOTIFICATIONS.unshift({ id:Date.now(), icon:'👤', icoBg:'rgba(139,92,246,.12)', msg:`${name} สมัครเข้าระบบ รอการอนุมัติ`, time:'เมื่อสักครู่' });
     $('#login-err').style.color = '#10b981';
     $('#login-err').textContent = 'สมัครสำเร็จ! รอผู้ดูแลอนุมัติ แล้วเข้าสู่ระบบได้';
@@ -552,9 +569,9 @@ function renderMembers() {
   const canDelete = isAdmin;
   html+=`<div class="member-table"><div class="member-row head"><div>สมาชิก</div><div>ทีม</div><div>ตำแหน่ง</div><div>บทบาท</div><div>${canDelete?'จัดการ':'สถานะ'}</div></div>${active.map(m=>{const tc=TEAMS[m.team]?.color||'#4f46e5';const rb=m.role==='admin'?'<span class="role-badge" style="color:#4f46e5;background:rgba(79,70,229,.1)">Admin</span>':'<span class="role-badge" style="color:#4a5060;background:#f1f2f7">Member</span>';const isSelf=currentUser&&currentUser.id===m.id;const actions=canDelete&&!isSelf?`<button class="approve-btn" style="background:#fee2e2;color:#dc2626" data-delete-member="${m.id}">ลบ</button>`:`<span class="role-badge" style="color:#059669;background:rgba(16,185,129,.12)">Active</span>`;return`<div class="member-row"><div class="member-name"><span class="user-avatar" style="width:30px;height:30px;font-size:11px;background:${tc}">${m.initial}</span><div><div style="font-size:13px;font-weight:700;color:var(--ink-2)">${m.name}</div><div style="font-size:11px;color:var(--muted)">@${m.user}</div></div></div><div><span class="team-tag" style="color:${tc};background:${hexToRgba(tc,.1)}">${TEAMS[m.team]?.name||'ทุกทีม'}</span></div><div style="font-size:12.5px;color:#4a5060">${m.title}</div><div>${rb}</div><div>${actions}</div></div>`;}).join('')}</div>`;
   $('#members-content').innerHTML=html;
-  $$('[data-approve]').forEach(btn=>btn.addEventListener('click',()=>{const m=MEMBERS.find(x=>x.id===btn.dataset.approve);if(m){m.status='active';if(DB.isConnected())DB.updateProfile(m.id,{status:'active'});toast(`อนุมัติ ${m.name} สำเร็จ`);renderMembers();}}));
-  $$('[data-reject]').forEach(btn=>btn.addEventListener('click',()=>{const idx=MEMBERS.findIndex(x=>x.id===btn.dataset.reject);if(idx>=0){const name=MEMBERS[idx].name;MEMBERS.splice(idx,1);toast(`ปฏิเสธ ${name} แล้ว`);renderMembers();}}));
-  $$('[data-delete-member]').forEach(btn=>btn.addEventListener('click',()=>{const idx=MEMBERS.findIndex(x=>x.id===btn.dataset.deleteMember);if(idx>=0){const name=MEMBERS[idx].name;if(confirm(`ลบสมาชิก "${name}" ออกจากระบบ?`)){MEMBERS.splice(idx,1);toast(`ลบ ${name} แล้ว`);renderMembers();}}}));
+  $$('[data-approve]').forEach(btn=>btn.addEventListener('click',()=>{const m=MEMBERS.find(x=>x.id===btn.dataset.approve);if(m){m.status='active';persistMembers();if(DB.isConnected())DB.updateProfile(m.id,{status:'active'});toast(`อนุมัติ ${m.name} สำเร็จ`);renderMembers();}}));
+  $$('[data-reject]').forEach(btn=>btn.addEventListener('click',()=>{const idx=MEMBERS.findIndex(x=>x.id===btn.dataset.reject);if(idx>=0){const name=MEMBERS[idx].name;MEMBERS.splice(idx,1);persistMembers();toast(`ปฏิเสธ ${name} แล้ว`);renderMembers();}}));
+  $$('[data-delete-member]').forEach(btn=>btn.addEventListener('click',()=>{const idx=MEMBERS.findIndex(x=>x.id===btn.dataset.deleteMember);if(idx>=0){const name=MEMBERS[idx].name;if(confirm(`ลบสมาชิก "${name}" ออกจากระบบ?`)){MEMBERS.splice(idx,1);persistMembers();toast(`ลบ ${name} แล้ว`);renderMembers();}}}));
 }
 
 /* ============================================================
