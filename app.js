@@ -168,6 +168,18 @@ async function loadFromSupabase() {
       }));
       KOL_SEQ = Math.max(...KOLS.map(k => k.id)) + 1;
     }
+    // Load profiles from Supabase into MEMBERS
+    const profiles = await DB.loadProfiles();
+    if (profiles.length) {
+      MEMBERS.length = 0; // clear demo members
+      profiles.forEach(p => {
+        MEMBERS.push({
+          id: p.id, name: p.name, initial: p.initial || p.name[0],
+          role: p.role || 'member', team: p.team, title: p.title || 'สมาชิกใหม่',
+          status: p.status || 'pending', user: p.name, _sb: true,
+        });
+      });
+    }
     return true;
   } catch (e) { console.warn('Supabase load error:', e); return false; }
 }
@@ -559,9 +571,23 @@ function renderReports() {
 /* ============================================================
    MEMBERS
    ============================================================ */
-function renderMembers() {
+async function renderMembers() {
+  // Reload profiles from Supabase if connected
+  if (DB.isConnected()) {
+    const profiles = await DB.loadProfiles();
+    if (profiles.length) {
+      MEMBERS.length = 0;
+      profiles.forEach(p => {
+        MEMBERS.push({
+          id: p.id, name: p.name, initial: p.initial || p.name[0],
+          role: p.role || 'member', team: p.team, title: p.title || 'สมาชิกใหม่',
+          status: p.status || 'pending', user: p.name, _sb: true,
+        });
+      });
+    }
+  }
   const isAdmin=currentUser&&currentUser.role==='admin';
-  const active=MEMBERS.filter(m=>m.status==='active'); const pending=MEMBERS.filter(m=>m.status==='pending');
+  const active=MEMBERS.filter(m=>m.status==='active'); const pending=MEMBERS.filter(m=>m.status==='pending'&&m.status!=='deleted'&&m.status!=='rejected');
   let html='';
   if(pending.length&&isAdmin){
     html+=`<div class="panel" style="border-color:#fbe0e0;background:linear-gradient(180deg,#fff,#fffafa)"><div class="deadline-head"><span class="pulse" style="background:#f59e0b"></span><div class="title" style="color:#d97706">รออนุมัติ</div><span class="count" style="color:#d97706">${pending.length} คน</span></div><div class="member-table">${pending.map(m=>`<div class="member-row"><div class="member-name"><span class="user-avatar" style="width:30px;height:30px;font-size:11px">${m.initial}</span><div><div style="font-size:13px;font-weight:700;color:var(--ink-2)">${m.name}</div><div style="font-size:11px;color:var(--muted)">@${m.user}</div></div></div><div>${TEAMS[m.team]?.name||'—'}</div><div><span class="role-badge" style="color:#d97706;background:rgba(245,158,11,.12)">รออนุมัติ</span></div><div></div><div><button class="approve-btn" style="background:#10b981;color:#fff" data-approve="${m.id}">อนุมัติ</button> <button class="approve-btn" style="background:#fee2e2;color:#dc2626" data-reject="${m.id}">ปฏิเสธ</button></div></div>`).join('')}</div></div>`;
@@ -569,9 +595,9 @@ function renderMembers() {
   const canDelete = isAdmin;
   html+=`<div class="member-table"><div class="member-row head"><div>สมาชิก</div><div>ทีม</div><div>ตำแหน่ง</div><div>บทบาท</div><div>${canDelete?'จัดการ':'สถานะ'}</div></div>${active.map(m=>{const tc=TEAMS[m.team]?.color||'#4f46e5';const rb=m.role==='admin'?'<span class="role-badge" style="color:#4f46e5;background:rgba(79,70,229,.1)">Admin</span>':'<span class="role-badge" style="color:#4a5060;background:#f1f2f7">Member</span>';const isSelf=currentUser&&currentUser.id===m.id;const actions=canDelete&&!isSelf?`<button class="approve-btn" style="background:#fee2e2;color:#dc2626" data-delete-member="${m.id}">ลบ</button>`:`<span class="role-badge" style="color:#059669;background:rgba(16,185,129,.12)">Active</span>`;return`<div class="member-row"><div class="member-name"><span class="user-avatar" style="width:30px;height:30px;font-size:11px;background:${tc}">${m.initial}</span><div><div style="font-size:13px;font-weight:700;color:var(--ink-2)">${m.name}</div><div style="font-size:11px;color:var(--muted)">@${m.user}</div></div></div><div><span class="team-tag" style="color:${tc};background:${hexToRgba(tc,.1)}">${TEAMS[m.team]?.name||'ทุกทีม'}</span></div><div style="font-size:12.5px;color:#4a5060">${m.title}</div><div>${rb}</div><div>${actions}</div></div>`;}).join('')}</div>`;
   $('#members-content').innerHTML=html;
-  $$('[data-approve]').forEach(btn=>btn.addEventListener('click',()=>{const m=MEMBERS.find(x=>x.id===btn.dataset.approve);if(m){m.status='active';persistMembers();if(DB.isConnected())DB.updateProfile(m.id,{status:'active'});toast(`อนุมัติ ${m.name} สำเร็จ`);renderMembers();}}));
-  $$('[data-reject]').forEach(btn=>btn.addEventListener('click',()=>{const idx=MEMBERS.findIndex(x=>x.id===btn.dataset.reject);if(idx>=0){const name=MEMBERS[idx].name;MEMBERS.splice(idx,1);persistMembers();toast(`ปฏิเสธ ${name} แล้ว`);renderMembers();}}));
-  $$('[data-delete-member]').forEach(btn=>btn.addEventListener('click',()=>{const idx=MEMBERS.findIndex(x=>x.id===btn.dataset.deleteMember);if(idx>=0){const name=MEMBERS[idx].name;if(confirm(`ลบสมาชิก "${name}" ออกจากระบบ?`)){MEMBERS.splice(idx,1);persistMembers();toast(`ลบ ${name} แล้ว`);renderMembers();}}}));
+  $$('[data-approve]').forEach(btn=>btn.addEventListener('click',async()=>{const m=MEMBERS.find(x=>x.id===btn.dataset.approve);if(m){m.status='active';persistMembers();await DB.updateProfile(m.id,{status:'active'});toast(`อนุมัติ ${m.name} สำเร็จ`);renderMembers();}}));
+  $$('[data-reject]').forEach(btn=>btn.addEventListener('click',async()=>{const idx=MEMBERS.findIndex(x=>x.id===btn.dataset.reject);if(idx>=0){const m=MEMBERS[idx];if(DB.isConnected()){await DB.updateProfile(m.id,{status:'rejected'});}MEMBERS.splice(idx,1);persistMembers();toast(`ปฏิเสธ ${m.name} แล้ว`);renderMembers();}}));
+  $$('[data-delete-member]').forEach(btn=>btn.addEventListener('click',async()=>{const idx=MEMBERS.findIndex(x=>x.id===btn.dataset.deleteMember);if(idx>=0){const m=MEMBERS[idx];if(confirm(`ลบสมาชิก "${m.name}" ออกจากระบบ?`)){if(DB.isConnected()){await DB.updateProfile(m.id,{status:'deleted'});}MEMBERS.splice(idx,1);persistMembers();toast(`ลบ ${m.name} แล้ว`);renderMembers();}}}));
 }
 
 /* ============================================================
