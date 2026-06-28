@@ -42,12 +42,11 @@ function persistTasks() { saveLocal('tasks', TASKS); }
 function persistPosts() { saveLocal('posts', POSTS_DATA); }
 function persistKols() { saveLocal('kols', KOLS); }
 
-// Load saved members (e.g. newly registered pending members)
+// Load saved members — fully replace hardcoded array so deletes persist
 const _savedMembers = loadLocal('members');
-if (_savedMembers && _savedMembers.length) {
-  // Merge: keep demo members but add any new ones from localStorage
-  const demoIds = new Set(MEMBERS.map(m => m.id));
-  _savedMembers.forEach(m => { if (!demoIds.has(m.id)) MEMBERS.push(m); else { const idx = MEMBERS.findIndex(x => x.id === m.id); if (idx >= 0) MEMBERS[idx] = m; } });
+if (_savedMembers) {
+  MEMBERS.length = 0;
+  _savedMembers.forEach(m => MEMBERS.push(m));
 }
 
 /* ---------- Mutable data (synced from Supabase when connected) ---------- */
